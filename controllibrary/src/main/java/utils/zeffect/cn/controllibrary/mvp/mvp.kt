@@ -2,10 +2,14 @@ package utils.zeffect.cn.controllibrary.mvp
 
 import android.app.Service
 import android.content.Context
+import android.os.Environment
+import android.os.FileObserver
+import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.WindowManager
 import utils.zeffect.cn.controllibrary.R
 import utils.zeffect.cn.controllibrary.bean.AppControl
+import java.io.File
 
 class LockImp(context: Context) {
     private val mLockView by lazy { LockView(context) }
@@ -15,8 +19,8 @@ class LockImp(context: Context) {
     private lateinit var mDelImp: DelControlImp
     fun start(userid: String) {
         if (isStart) return
-        mAppImp = AppControlImp(userid)
-        mAppImp.start()
+        mAppImp = AppControlImp()
+        mAppImp.start(userid)
         mScreenImp = ScreenControlImp(userid)
         mScreenImp.start()
         mDelImp = DelControlImp(userid)
@@ -66,21 +70,38 @@ object Constant {
     val ACTION_KEY = "action"
     val START_KEY = "start"
     val USER_ID_KEY = "userid"
+    val SD_PATH = "${Environment.getExternalStorageDirectory().absolutePath}${File.separator}Device${File.separator}"
 }
 
 
-class AppControlImp(userid: String) {
-    private lateinit var mAppContrl: AppControl
-    fun start() {
-        if (mAppContrl != null) return
+class AppControlImp() : MyFileObserver.FileListener {
+    override fun change(path: String) {
+
     }
 
+    private lateinit var mAppContrl: AppControl
+    private var mFileObserver: MyFileObserver? = null
+    private var mUserId: String = ""
+    private val FILE_NAME = ".appcontrol"
+    fun start(userid: String) {
+        if (userid == mUserId) return
+        stop()
+        val path = "${Constant.SD_PATH}$userid${File.separator}$FILE_NAME"
+        mFileObserver = MyFileObserver(path)
+        mFileObserver?.startWatching()
+
+    }
+
+    fun check() {}
     fun changeUser() {}
-    fun stop() {}
+    fun stop() {
+        mFileObserver?.stopWatching()
+    }
 }
 
 class ScreenControlImp(userid: String) {
     fun start() {}
+    fun check() {}
     fun changeUser() {}
     fun stop() {}
 }
@@ -88,6 +109,27 @@ class ScreenControlImp(userid: String) {
 
 class DelControlImp(userid: String) {
     fun start() {}
+    fun check() {}
     fun changeUser() {}
     fun stop() {}
+}
+
+class MyFileObserver(path: String) : FileObserver(path) {
+    private var mFileListener: FileListener? = null
+    private val mPath by lazy { path }
+    fun setFileListener(listener: FileListener) {
+        this.mFileListener = listener
+    }
+
+    override fun onEvent(event: Int, path: String?) {
+        when (event and FileObserver.ALL_EVENTS) {
+            FileObserver.MODIFY -> mFileListener?.change(mPath)
+            FileObserver.CREATE -> mFileListener?.change(mPath)
+        }
+    }
+
+
+    interface FileListener {
+        fun change(path: String)
+    }
 }
