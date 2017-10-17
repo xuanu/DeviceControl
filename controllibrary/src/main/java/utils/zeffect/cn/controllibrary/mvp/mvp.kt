@@ -12,6 +12,7 @@ import utils.zeffect.cn.controllibrary.R
 import utils.zeffect.cn.controllibrary.bean.App
 import utils.zeffect.cn.controllibrary.bean.AppControl
 import utils.zeffect.cn.controllibrary.bean.ControlUtils
+import utils.zeffect.cn.controllibrary.bean.ScreenControl
 import utils.zeffect.cn.controllibrary.utils.PackageUtils
 import utils.zeffect.cn.controllibrary.utils.WeakHandler
 import zeffect.cn.common.app.AppUtils
@@ -20,7 +21,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
 class LockImp(context: Context) {
-    private val mLockView by lazy { LockView(context) }
     private val mContext by lazy { context }
     private var isStart = false
     private lateinit var mAppImp: AppControlImp
@@ -232,7 +232,8 @@ class AppControlImp(context: Context, userid: String) : MyFileObserver.FileListe
 
 class ScreenControlImp(context: Context, userid: String) : MyFileObserver.FileListener {
     override fun change(path: String) {
-        check(path)
+        mScreenContrl = ControlUtils.json2Screen(ControlUtils.readFile(path))
+        check()
     }
 
     private var mUserId = userid
@@ -240,6 +241,7 @@ class ScreenControlImp(context: Context, userid: String) : MyFileObserver.FileLi
     private var mFileObserver: MyFileObserver? = null
     private val FILE_NAME = ".screencontrol"
     private val mLockView by lazy { LockView(context) }
+    private var mScreenContrl: ScreenControl? = null
 
     init {
         start(userid)
@@ -247,11 +249,12 @@ class ScreenControlImp(context: Context, userid: String) : MyFileObserver.FileLi
 
     private fun start(userid: String) {
         stop()
-        check(startWatch(userid))
+        mScreenContrl = ControlUtils.json2Screen(ControlUtils.readFile(startWatch(userid)))
+        check()
     }
 
-    fun check(path: String) {
-        val control = ControlUtils.json2Screen(ControlUtils.readFile(path))
+    fun check() {
+        val control = mScreenContrl
         if (control == null) {
             mLockView.remove()
             return
@@ -260,8 +263,17 @@ class ScreenControlImp(context: Context, userid: String) : MyFileObserver.FileLi
             mLockView.remove()
             return
         }
-        if (control.start != 0 && control.end != 0) {
-
+        if ((control.start in 0..24 && control.end in 0..24)) {
+            if (control.end > control.start) {
+                if (ControlUtils.getTime() in control.start..control.end) mLockView.show()
+                else mLockView.remove()
+            } else if (control.start > control.end) {
+                val time = ControlUtils.getTime()
+                if (time > control.start || time < control.end) mLockView.show()
+                else mLockView.remove()
+            } else {
+                mLockView.remove()
+            }
         } else {
             mLockView.show()
         }
