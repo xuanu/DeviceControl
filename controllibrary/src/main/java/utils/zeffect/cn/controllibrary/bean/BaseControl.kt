@@ -1,25 +1,31 @@
 package utils.zeffect.cn.controllibrary.bean
 
+import android.content.Context
+import android.content.Intent
 import android.text.TextUtils
-import android.view.TextureView
+import org.jetbrains.anko.startService
 import org.json.JSONObject
+import utils.zeffect.cn.controllibrary.LockService
+import utils.zeffect.cn.controllibrary.mvp.Constant
 import java.io.*
+import java.util.*
+
 
 data class AppControl(val code: Int,
                       val status: Int,
-                      val wob: Int = 0,//白名单还是黑名单
+                      val wob: Int = 0, //白名单还是黑名单
                       val apps: String = "",
                       val start: Long = 0,
                       val end: Long = 0)
 
 data class ScreenControl(val code: Int,
                          val status: Int,
-                         val start: Long = 0,
-                         val end: Long = 0)
+                         val start: Int = 0,
+                         val end: Int = 0)
 
 data class DelControl(val code: Int,
                       val status: Int,
-                      val apps: ArrayList<App>)
+                      val apps: List<App>)
 
 data class App(val packagename: String, val enable: Int = 0) {
     override fun toString(): String {
@@ -29,9 +35,45 @@ data class App(val packagename: String, val enable: Int = 0) {
 
 
 object ControlUtils {
-    fun start(userid: String = "no_user_id") {}
-    fun updateUser(userid:String){}
-    fun updateControl(control:String){}
+    fun start(context: Context, userid: String = "no_user_id") {
+        context.startService<LockService>(Pair(Constant.ACTION_KEY, Constant.START_KEY), Pair(Constant.USER_ID_KEY, userid))
+    }
+
+    fun change(context: Context) {
+        context.startService<LockService>(Pair(Constant.ACTION_KEY, Constant.CHANGE_KEY))
+    }
+
+    fun getTime(): Int {
+        return Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+    }
+
+    fun updateUser(userid: String) {}
+    fun updateControl(control: String) {}
+    /***
+     * json2应用管控bean
+     */
+    fun json2App(json: String): AppControl {
+        return AppControl(100, 1, 0, "com.qimon.message")
+    }
+
+    fun json2Screen(json: String): ScreenControl {
+        return ScreenControl(100, 0)
+    }
+
+    fun json2Del(json: String): DelControl {
+        return DelControl(100, 1, Collections.emptyList<App>())
+    }
+
+    /***
+     * 去桌面
+     */
+    fun goHome(context: Context) {
+        val homeIntent = Intent(Intent.ACTION_MAIN)
+        homeIntent.addCategory(Intent.CATEGORY_HOME)
+        homeIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        context.startActivity(homeIntent)
+    }
+
     /****
      * 读取文件内容
      * @param filePath 路径

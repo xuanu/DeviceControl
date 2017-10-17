@@ -19,6 +19,9 @@ class LockService : Service() {
                 val userid: String = intent?.getStringExtra(Constant.USER_ID_KEY) ?: ""
                 mLockImp.start(userid)
             }
+            Constant.CHANGE_KEY -> {
+                mLockImp.changeControl()
+            }
         }
         return Service.START_STICKY
     }
