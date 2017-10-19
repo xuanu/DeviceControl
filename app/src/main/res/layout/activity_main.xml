@@ -11,19 +11,51 @@
         android:id="@+id/startAll"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="开启所有"
+        android:text="开启所有,先要开启所有"
         />
+
+    <Button
+        android:id="@+id/startBlackApp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="开启应用管控，黑名单（设置的应用不能打开），时间10点到12点，应用为：学信和出货检查"/>
+
+    <Button
+        android:id="@+id/startWhiteApp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="开启应用管控，白名单（只能打开设置的应用），时间10点到12点，应用为：学信和出货检查"/>
+
+    <Button
+        android:id="@+id/closeApp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="关闭应用锁"/>
 
     <Button
         android:id="@+id/startScreen"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="开启屏幕管控"/>
+        android:text="开启屏幕锁，时间10-12点"/>
 
     <Button
-        android:id="@+id/uninstallMessage"
-        android:text="卸载学信应用"
+        android:id="@+id/closeScreen"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:text="关闭屏幕锁"/>
+
+    <Button
+        android:id="@+id/startDel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="开启卸载应用,卸载的应用为：学信和出货检查"/>
+
+    <Button
+        android:id="@+id/closeDel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="关闭卸载"/>
+
+
 
 </LinearLayout>

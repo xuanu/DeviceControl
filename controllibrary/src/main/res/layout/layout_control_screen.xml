@@ -4,7 +4,7 @@
           android:layout_height="match_parent"
           android:background="#000000"
           android:gravity="center"
-          android:text="锁屏中,长按60秒后，松手，会直接解锁"
+          android:text="锁屏中,长按60秒后，松手，会直接解锁\n测试期间点击移除"
           android:textColor="#ffffff">
 
 </TextView>
