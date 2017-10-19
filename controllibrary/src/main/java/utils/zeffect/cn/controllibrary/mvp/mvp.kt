@@ -8,6 +8,8 @@ import android.os.Handler
 import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.WindowManager
+import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.uiThread
 import utils.zeffect.cn.controllibrary.R
 import utils.zeffect.cn.controllibrary.bean.*
 import utils.zeffect.cn.controllibrary.utils.PackageUtils
@@ -391,29 +393,36 @@ class ScreenControlImp(context: Context, userid: String) : MyFileObserver.FileLi
     }
 
     override fun check() {
-        val control = mScreenContrl
-        if (control == null) {
-            mLockView.remove()
-            return
-        }
-        if (control.status != Constant.STATUS_OPEN) {
-            mLockView.remove()
-            return
-        }
-        if ((control.start in 0..24 && control.end in 0..24)) {
-            if (control.end > control.start) {
-                if (ControlUtils.getTime() in control.start..control.end) mLockView.show()
-                else mLockView.remove()
-            } else if (control.start > control.end) {
-                val time = ControlUtils.getTime()
-                if (time > control.start || time < control.end) mLockView.show()
-                else mLockView.remove()
-            } else {
-                mLockView.remove()
-            }
-        } else {
-            mLockView.show()
-        }
+//        doAsync {
+//            var isShow = false
+//            val control = mScreenContrl
+//            if (control == null) {
+//                isShow = false
+//                return@doAsync
+//            }
+//            if (control.status != Constant.STATUS_OPEN) {
+//                isShow = false
+//                return@doAsync
+//            }
+//            isShow = if ((control.start in 0..24 && control.end in 0..24)) {
+//                when {
+//                    control.end > control.start -> ControlUtils.getTime() in control.start..control.end
+//                    control.start > control.end -> {
+//                        val time = ControlUtils.getTime()
+//                        time > control.start || time < control.end
+//                    }
+//                    else -> false
+//                }
+//            } else {
+//                false
+//            }
+//            uiThread {
+//                if (isShow) mLockView.show()
+//                else mLockView.remove()
+//            }
+//        }
+
+
     }
 
     override fun changeUser(newUserid: String) {

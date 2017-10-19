@@ -48,7 +48,7 @@ class LockService : Service() {
         val filter = IntentFilter()
         filter.addAction(Intent.ACTION_SCREEN_ON)//亮屏
         filter.addAction(Intent.ACTION_SCREEN_OFF)//关屏
-        filter.addAction(Intent.ACTION_TIME_TICK)//时间变化
+//        filter.addAction(Intent.ACTION_TIME_TICK)//时间变化
         registerReceiver(receiver, filter)
         //
         val filter1 = IntentFilter()
@@ -71,7 +71,7 @@ class LockService : Service() {
             when (action) {
                 Intent.ACTION_SCREEN_ON -> mLockImp.resume()
                 Intent.ACTION_SCREEN_OFF -> mLockImp.pause()
-                Intent.ACTION_TIME_TICK -> mLockImp.check()
+//                Intent.ACTION_TIME_TICK -> mLockImp.check()
             }
         }
 

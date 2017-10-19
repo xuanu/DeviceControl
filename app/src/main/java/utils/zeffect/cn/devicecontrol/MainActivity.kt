@@ -8,8 +8,10 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import kotlinx.android.synthetic.main.activity_main.*
+import org.jetbrains.anko.toast
 import utils.zeffect.cn.controllibrary.bean.ControlUtils
 import utils.zeffect.cn.controllibrary.utils.app.UsageStatsUtils
+import zeffect.cn.common.app.AppUtils
 
 
 class MainActivity : Activity() {
@@ -18,7 +20,8 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         startAll.setOnClickListener {
-            startAll()
+                        startAll()
+//            toast(AppUtils.getTopPackageName(this, 5))
         }
         startWhiteApp.setOnClickListener { ControlUtils.updateControl(USERID, SimulData.App(1, 1)) }
         startBlackApp.setOnClickListener { ControlUtils.updateControl(USERID, SimulData.App(1, 0)) }
@@ -74,5 +77,6 @@ class MainActivity : Activity() {
         }
         return true
     }
+
 
 }
