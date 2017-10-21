@@ -8,8 +8,10 @@ import android.content.IntentFilter
 import android.location.LocationManager
 import android.os.IBinder
 import android.text.TextUtils
+import org.jetbrains.anko.startService
 import utils.zeffect.cn.controllibrary.mvp.Constant
 import utils.zeffect.cn.controllibrary.mvp.LockImp
+import zeffect.cn.common.log.L
 
 
 /**
@@ -19,22 +21,31 @@ class LockService : Service() {
     private val mLockImp by lazy { LockImp(this) }
     override fun onCreate() {
         super.onCreate()
+        mLockImp.start(mLockImp.getUserId())
         reges()
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        unregisterReceiver(receiver)
         mLockImp.stop()
-        unreges()
+        startService<LockService>()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val action: String = intent?.getStringExtra(Constant.ACTION_KEY) ?: ""
         when (action) {
             Constant.START_KEY -> {
-                val userid: String = intent?.getStringExtra(Constant.USER_ID_KEY) ?: ""
+                val userid: String = intent?.getStringExtra(Constant.USER_ID_KEY) ?: mLockImp.getUserId()
                 if (TextUtils.isEmpty(userid)) mLockImp.start()
-                else mLockImp.start(userid)
+                else {
+                    if (mLockImp.getUserId() != userid) mLockImp.changeUser(userid)
+                    else mLockImp.start(userid)
+                }
+            }
+            Constant.CHANGE_KEY -> {
+                val userid: String = intent?.getStringExtra(Constant.USER_ID_KEY) ?: ""
+                if (!TextUtils.isEmpty(userid)) mLockImp.changeUser(userid)
             }
         }
         return Service.START_STICKY
@@ -58,20 +69,21 @@ class LockService : Service() {
         filter1.addAction(LocationManager.PROVIDERS_CHANGED_ACTION)
         filter1.addDataScheme("package")
         registerReceiver(receiver, filter1)
+        //
     }
-
-    private fun unreges() {
-        unregisterReceiver(receiver)
-    }
-
 
     private val receiver = object : BroadcastReceiver() {
-        override fun onReceive(p0: Context?, p1: Intent?) {
+        override fun onReceive(p0: Context?, p1: Intent) {
             val action = p1?.action ?: ""
+            L.e("receiver action $action")
             when (action) {
                 Intent.ACTION_SCREEN_ON -> mLockImp.resume()
                 Intent.ACTION_SCREEN_OFF -> mLockImp.pause()
-//                Intent.ACTION_TIME_TICK -> mLockImp.check()
+                Intent.ACTION_TIME_TICK -> mLockImp.check()
+                Intent.ACTION_PACKAGE_ADDED -> {
+                    val packageName = p1.dataString.substring(8)
+                    mLockImp.packageAdd(packageName)
+                }
             }
         }
 

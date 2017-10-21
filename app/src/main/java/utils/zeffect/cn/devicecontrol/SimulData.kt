@@ -25,8 +25,8 @@ object SimulData {
         dataJson.put("status", status)
         dataJson.put("wob", wob)
         dataJson.put("apps", "com.qimon.message,qimon.com.cn.qimoncheck")
-        dataJson.put("start", 10)
-        dataJson.put("end", 12)
+        dataJson.put("start", 0)
+        dataJson.put("end", 24)
         return dataJson.toString()
     }
 
@@ -34,8 +34,8 @@ object SimulData {
         val dataJson = JSONObject()
         dataJson.put("code", Constant.CODE_SCREEN)
         dataJson.put("status", status)
-        dataJson.put("start", 10)
-        dataJson.put("end", 12)
+        dataJson.put("start", 0)
+        dataJson.put("end", 24)
         return dataJson.toString()
     }
 
@@ -43,10 +43,7 @@ object SimulData {
         val dataJson = JSONObject()
         dataJson.put("code", Constant.CODE_DEL)
         dataJson.put("status", status)
-        val array = JSONArray()
-        array.put(JSONObject().put("packagename", "com.qimon.message").put("enable", 0))
-        array.put(JSONObject().put("packagename", "qimon.com.cn.qimoncheck").put("enable", 1))
-        dataJson.put("apps", array)
+        dataJson.put("apps", "com.qimon.message,qimon.com.cn.qimoncheck")
         return dataJson.toString()
     }
 

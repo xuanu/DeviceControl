@@ -11,7 +11,6 @@ import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.toast
 import utils.zeffect.cn.controllibrary.bean.ControlUtils
 import utils.zeffect.cn.controllibrary.utils.app.UsageStatsUtils
-import zeffect.cn.common.app.AppUtils
 
 
 class MainActivity : Activity() {
@@ -20,8 +19,7 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         startAll.setOnClickListener {
-                        startAll()
-//            toast(AppUtils.getTopPackageName(this, 5))
+            startAll()
         }
         startWhiteApp.setOnClickListener { ControlUtils.updateControl(USERID, SimulData.App(1, 1)) }
         startBlackApp.setOnClickListener { ControlUtils.updateControl(USERID, SimulData.App(1, 0)) }
@@ -30,6 +28,8 @@ class MainActivity : Activity() {
         closeScreen.setOnClickListener { ControlUtils.updateControl(USERID, SimulData.ScreenControl(0)) }
         startDel.setOnClickListener { ControlUtils.updateControl(USERID, SimulData.DekControl(1)) }
         closeDel.setOnClickListener { ControlUtils.updateControl(USERID, SimulData.DekControl(0)) }
+        touchTest.setOnClickListener { toast("点击测试，屏幕有无响应！") }
+
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

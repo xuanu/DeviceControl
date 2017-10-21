@@ -2,6 +2,7 @@ package utils.zeffect.cn.controllibrary.mvp
 
 import android.app.Service
 import android.content.Context
+import android.content.Intent
 import android.os.Environment
 import android.os.FileObserver
 import android.os.Handler
@@ -11,14 +12,18 @@ import android.view.WindowManager
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
 import utils.zeffect.cn.controllibrary.R
-import utils.zeffect.cn.controllibrary.bean.*
+import utils.zeffect.cn.controllibrary.bean.AppControl
+import utils.zeffect.cn.controllibrary.bean.ControlUtils
+import utils.zeffect.cn.controllibrary.bean.DelControl
+import utils.zeffect.cn.controllibrary.bean.ScreenControl
 import utils.zeffect.cn.controllibrary.utils.PackageUtils
 import utils.zeffect.cn.controllibrary.utils.WeakHandler
 import zeffect.cn.common.app.AppUtils
+import zeffect.cn.common.log.L
 import zeffect.cn.common.sp.SpUtils
 import java.io.File
 import java.util.concurrent.Executors
-import java.util.concurrent.Semaphore
+
 
 interface ControlInterface {
     fun changeUser(newUserid: String)
@@ -26,6 +31,7 @@ interface ControlInterface {
     fun pause()
     fun resume()
     fun stop()
+    fun packageAdd(name: String) {}
 }
 
 class LockImp(context: Context) : ControlInterface {
@@ -44,6 +50,11 @@ class LockImp(context: Context) : ControlInterface {
         isStart = true
         //把id存起来
         saveId(userid)
+    }
+
+
+    override fun packageAdd(name: String) {
+        mDelImp?.packageAdd(name)
     }
 
     override fun changeUser(newString: String) {
@@ -100,7 +111,7 @@ class LockView(context: Context) {
     private val mWm by lazy { context.getSystemService(Service.WINDOW_SERVICE) as WindowManager }
     private val mParam by lazy {
         WindowManager.LayoutParams(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT).apply {
-            this.alpha = 0f
+            this.alpha = 0.8f
             this.type = WindowManager.LayoutParams.TYPE_SYSTEM_ERROR
             this.flags = WindowManager.LayoutParams.FLAG_FULLSCREEN
         }
@@ -121,6 +132,12 @@ class LockView(context: Context) {
 //            ;true
 //        }
         }
+    }
+
+    init {
+        mWm
+        mParam
+        mView
     }
 
     /**是否添加了布局，这个是锁屏布局**/
@@ -151,6 +168,9 @@ object Constant {
     val SD_PATH = "${Environment.getExternalStorageDirectory().absolutePath}${File.separator}Device${File.separator}"
     //*************************************************************************
     val ACTION_KEY = "action"
+    val ACTION_SHOW_VIEW_KEY = "action_show_view"
+    val ACTION_REMOVE_VIEW_KEY = "action_remove_view"
+    //*************************************************************************
     val START_KEY = "start"
     val USER_ID_KEY = "userid"
     val STATUS_OPEN = 1
@@ -188,6 +208,7 @@ class AppControlImp(context: Context, userid: String) : MyFileObserver.FileListe
     private val mSingleThreadExecutor = Executors.newSingleThreadExecutor()
     private var mAppRun: AppRunable? = null
     private var mUserId = userid
+    private var mControl: AppControl? = null
 
     init {
         start(userid)
@@ -203,7 +224,10 @@ class AppControlImp(context: Context, userid: String) : MyFileObserver.FileListe
      * 触发条件时进行检测
      */
     override fun check() {
-        //也应该不用实现什么
+        if (ControlUtils.intime(mControl?.start ?: 0, mControl?.end ?: 0)) {
+            val path = "${Constant.SD_PATH}$mUserId${File.separator}${Constant.APP_FILE_NAME}"
+            changeControl(path)
+        }
     }
 
     override fun changeUser(newUserid: String) {
@@ -237,6 +261,7 @@ class AppControlImp(context: Context, userid: String) : MyFileObserver.FileListe
     private fun startControl(mAppContrl: AppControl) {
         if (mAppContrl == null) return
         if (mAppContrl?.status != Constant.STATUS_OPEN) return
+        mControl = mAppContrl
         if (mAppRun == null || !mAppRun?.getRun()!!) mAppRun = AppRunable(mContext, mAppContrl)
         mSingleThreadExecutor.execute(mAppRun)
     }
@@ -245,6 +270,9 @@ class AppControlImp(context: Context, userid: String) : MyFileObserver.FileListe
         val tempContrl = ControlUtils.json2App(ControlUtils.readFile(path))
         if (mAppRun?.getRun() == true) startControl(tempContrl)
         mAppRun?.setControl(tempContrl)
+        if (mAppRun == null || mAppRun?.getRun() == false) {
+            startControl(tempContrl)
+        }
     }
 
 
@@ -287,12 +315,13 @@ class AppControlImp(context: Context, userid: String) : MyFileObserver.FileListe
                     break
                 }
                 val packages = mControl.apps
-                if (TextUtils.isEmpty(packages)) {
+                if (TextUtils.isEmpty(packages) || !ControlUtils.intime(mControl.start, mControl.end)) {
                     stop()
                     break
                 }
                 val wob = mControl.wob
                 val topApp = AppUtils.getTopPackageName(mContext)
+                L.e("top app :$topApp")
                 if (TextUtils.isEmpty(topApp)) {
                     continue
                 }
@@ -301,42 +330,18 @@ class AppControlImp(context: Context, userid: String) : MyFileObserver.FileListe
                 when (wob) {
                     Constant.WOB_WHITE -> {
                         if (!packages.contains(topApp)) {
-                            if (intime(mControl.start, mControl.end)) {
-                                ControlUtils.goHome(mContext)//不在白名单
-                            }
+                            ControlUtils.goHome(mContext)//不在白名单
                         }
                     }
                     else -> {
                         if (packages.contains(topApp)) {
-                            if (intime(mControl.start, mControl.end)) {
-                                ControlUtils.goHome(mContext)//在黑名单
-                            }
+                            ControlUtils.goHome(mContext)//在黑名单
                         }
                     }
                 }
             }
         }
 
-        /***
-         * 是否在时间内，默认都在时间内
-         */
-        private fun intime(start: Int, end: Int): Boolean {
-            val nowTime = ControlUtils.getTime()
-            return if (start in 0..24 && end in 0..24) {
-                when {
-                    start > end -> {
-                        nowTime > end || nowTime < start
-                    }
-                    start < end -> {
-                        nowTime in start..end
-                    }
-                    else -> true
-                }
-            } else {
-                true
-            }
-
-        }
 
         fun setRuning(pisRun: Boolean) {
             this.isRun = pisRun
@@ -372,8 +377,8 @@ class ScreenControlImp(context: Context, userid: String) : MyFileObserver.FileLi
     private var mUserId = userid
     private val mContext by lazy { context }
     private var mFileObserver: MyFileObserver? = null
-    private val mLockView by lazy { LockView(context) }
     private var mScreenContrl: ScreenControl? = null
+    private val mLockView by lazy { LockView(mContext) }
 
     private val mHandler by lazy {
         WeakHandler(mContext.mainLooper, Handler.Callback { message ->
@@ -384,6 +389,7 @@ class ScreenControlImp(context: Context, userid: String) : MyFileObserver.FileLi
 
     init {
         start(userid)
+        mLockView
     }
 
     private fun start(userid: String) {
@@ -393,36 +399,34 @@ class ScreenControlImp(context: Context, userid: String) : MyFileObserver.FileLi
     }
 
     override fun check() {
-//        doAsync {
-//            var isShow = false
-//            val control = mScreenContrl
-//            if (control == null) {
-//                isShow = false
-//                return@doAsync
-//            }
-//            if (control.status != Constant.STATUS_OPEN) {
-//                isShow = false
-//                return@doAsync
-//            }
-//            isShow = if ((control.start in 0..24 && control.end in 0..24)) {
-//                when {
-//                    control.end > control.start -> ControlUtils.getTime() in control.start..control.end
-//                    control.start > control.end -> {
-//                        val time = ControlUtils.getTime()
-//                        time > control.start || time < control.end
-//                    }
-//                    else -> false
-//                }
-//            } else {
-//                false
-//            }
-//            uiThread {
-//                if (isShow) mLockView.show()
-//                else mLockView.remove()
-//            }
-//        }
-
-
+        doAsync {
+            var isShow = false
+            val control = mScreenContrl
+            if (control == null) {
+                isShow = false
+                return@doAsync
+            }
+            if (control.status != Constant.STATUS_OPEN) {
+                isShow = false
+                return@doAsync
+            }
+            isShow = if ((control.start in 0..24 && control.end in 0..24)) {
+                when {
+                    control.end > control.start -> ControlUtils.getTime() in control.start..control.end
+                    control.start > control.end -> {
+                        val time = ControlUtils.getTime()
+                        time > control.start || time < control.end
+                    }
+                    else -> false
+                }
+            } else {
+                false
+            }
+            uiThread {
+                if (isShow) mLockView.show()// mContext.sendBroadcast(Intent(Constant.ACTION_SHOW_VIEW_KEY))
+                else mLockView.remove()// mContext.sendBroadcast(Intent(Constant.ACTION_REMOVE_VIEW_KEY))
+            }
+        }
     }
 
     override fun changeUser(newUserid: String) {
@@ -450,7 +454,7 @@ class ScreenControlImp(context: Context, userid: String) : MyFileObserver.FileLi
 
     override fun stop() {
         stopWathch()
-        mLockView.remove()
+        mContext.sendBroadcast(Intent(Constant.ACTION_REMOVE_VIEW_KEY))
     }
 }
 
@@ -458,6 +462,11 @@ class ScreenControlImp(context: Context, userid: String) : MyFileObserver.FileLi
 class DelControlImp(context: Context, userid: String) : MyFileObserver.FileListener, ControlInterface {
     override fun check() {
         //不需要实现
+    }
+
+    override fun packageAdd(name: String) {
+        val path = "${Constant.SD_PATH}$mUserid${File.separator}${Constant.DEL_FILE_NAME}"
+        inCheck(mUserid, path)
     }
 
     override fun pause() {
@@ -475,24 +484,8 @@ class DelControlImp(context: Context, userid: String) : MyFileObserver.FileListe
     private var mDelControl: DelControl? = null
     private var mUserid = userid
     private val mContext = context
-    private val mTask = arrayListOf<DelRun>()
-    private val mSemp = Semaphore(1)
     private val mSingle by lazy { Executors.newSingleThreadExecutor() }
     private var mRunDelRun: DelRun? = null
-    private val mHandler by lazy {
-        WeakHandler(context.mainLooper, Handler.Callback { message ->
-            if (message.what == 0x99) {
-                if (mTask.isNotEmpty()) {
-                    mSemp.acquire()
-                    if (mDelControl?.status == Constant.STATUS_OPEN) {
-                        mRunDelRun = mTask.removeAt(0)
-                        mSingle.execute(mRunDelRun)
-                    }
-                }
-            }
-            true
-        })
-    }
     private var mFileObserver: MyFileObserver? = null
 
     init {
@@ -503,6 +496,7 @@ class DelControlImp(context: Context, userid: String) : MyFileObserver.FileListe
         stop()
         val path = startWatch(userid)
         inCheck(userid, path)
+
     }
 
     /***
@@ -519,11 +513,24 @@ class DelControlImp(context: Context, userid: String) : MyFileObserver.FileListe
         }
         val tempList = contrl.apps
         if (tempList.isEmpty()) return
-        mTask.filter { it.getControl().enable != Constant.STATUS_OPEN }
-        tempList.forEach {
-            mTask.add(DelRun(mContext, userid, contrl, it, mSemp, mHandler))
+        checkApp()
+    }
+
+
+    private fun checkApp() {
+        if (mDelControl == null) {
+            mRunDelRun?.setExit(true);return
         }
-        mHandler.sendEmptyMessage(0x99)
+        if (mDelControl?.status != Constant.STATUS_OPEN) {
+            mRunDelRun?.setExit(true);return
+            return
+        }
+        if (mDelControl?.apps?.isEmpty() == true) {
+            mRunDelRun?.setExit(true);return
+            return
+        }
+        mRunDelRun = DelRun(mContext, mUserid, mDelControl!!)
+        mSingle.execute(mRunDelRun)
     }
 
     override fun changeUser(newUserid: String) {
@@ -552,16 +559,14 @@ class DelControlImp(context: Context, userid: String) : MyFileObserver.FileListe
     override fun stop() {
         stopWathch()
         mRunDelRun?.setExit(true)
-        mTask.clear()
     }
 
-
-    class DelRun(context: Context, userid: String, control: DelControl, delApp: App, semaphore: Semaphore, handler: WeakHandler) : Runnable {
+    /***
+     * 这个线程，只有当需要卸载的内容为空，或者，开关为关，才结束
+     */
+    class DelRun(context: Context, userid: String, control: DelControl) : Runnable {
         private val mContext = context
         private val mUserid = userid
-        private val mDelApp = delApp
-        private val mHandler = handler
-        private val mSemap = semaphore
         private val INSTALLER_PACK = "com.android.packageinstaller"
         private var isPause = false
         fun pause(pause: Boolean) {
@@ -570,9 +575,13 @@ class DelControlImp(context: Context, userid: String) : MyFileObserver.FileListe
 
         private var isRun = true
         private var mControl = control
+        private var mDelApps = arrayListOf<String>()
+
 
         fun setControl(control: DelControl) {
             this.mControl = control
+            mDelApps.clear()
+            mDelApps.addAll(anyApps())
         }
 
         private val mSystemApp by lazy {
@@ -581,55 +590,58 @@ class DelControlImp(context: Context, userid: String) : MyFileObserver.FileListe
             tempSys
         }
 
+        init {
+            mDelApps.clear()
+            mDelApps.addAll(anyApps())
+        }
+
+        private fun anyApps(): List<String> {
+            if (mControl == null) return emptyList()
+            if (mControl.status != Constant.STATUS_OPEN) return emptyList()
+            val apps = mControl.apps
+            if (TextUtils.isEmpty(apps)) return emptyList()
+            return apps.split(",")
+        }
+
         override fun run() {
-            if (TextUtils.isEmpty(mDelApp.packagename)) {
+            if (mControl == null) {
                 stop()
                 return
             }
-            if (mSystemApp.contains(mDelApp.packagename)) {
+            if (TextUtils.isEmpty(mControl.apps) || mDelApps.isEmpty()) {
                 stop()
                 return
             }
             val lastUserId = mUserid
             while (isRun) {
-                if (lastUserId != mUserid) {
-                    stop();break
+                if (lastUserId != mUserid || mControl == null || mDelApps.isEmpty() || mControl.status != Constant.STATUS_OPEN) {
+                    stop()
+                    break
                 }
                 Thread.sleep(5000)
                 if (isPause) {
                     continue
                 }
-                if (mControl.status != Constant.STATUS_OPEN) {
+                if (mDelApps.isEmpty()) {
                     stop()
                     break
                 }
-                if (TextUtils.isEmpty(mDelApp.packagename)) {
-                    stop()
-                    return
+                val delPackageName = mDelApps[0]
+                L.e("del app $delPackageName")
+                if (TextUtils.isEmpty(delPackageName) || mSystemApp.contains(delPackageName) || delPackageName == mContext.packageName || !AppUtils.isPackageExist(mContext, delPackageName)) {
+                    mDelApps.removeAt(0)
+                    continue
                 }
-                if (mSystemApp.contains(mDelApp.packagename)) {
-                    stop()
-                    return
-                }
-                if (mDelApp.packagename == mContext.packageName) {
-                    stop()
-                    break
-                }
-                val isExist = AppUtils.isPackageExist(mContext, mDelApp.packagename)
-                if (!isExist) {
-                    stop()
-                    mHandler.sendEmptyMessage(0x99)
-                    break
-                }
+
                 val topApp = AppUtils.getTopPackageName(mContext)
+                L.e("top app :$topApp")
                 if (TextUtils.isEmpty(topApp)) {
-                    PackageUtils.uninstallNormal(mContext, mDelApp.packagename)
+                    PackageUtils.uninstallNormal(mContext, delPackageName)
                 }
                 if (topApp != INSTALLER_PACK) {
-                    PackageUtils.uninstallNormal(mContext, mDelApp.packagename)
+                    PackageUtils.uninstallNormal(mContext, delPackageName)
                 }
             }
-            stop()
         }
 
 
@@ -638,12 +650,7 @@ class DelControlImp(context: Context, userid: String) : MyFileObserver.FileListe
         }
 
         private fun stop() {
-            mSemap.release()
-            mHandler.sendEmptyMessage(0x99)
-        }
-
-        fun getControl(): App {
-            return mDelApp
+            this.isRun = false
         }
 
     }

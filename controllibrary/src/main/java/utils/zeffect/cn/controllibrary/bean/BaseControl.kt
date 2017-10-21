@@ -3,6 +3,7 @@ package utils.zeffect.cn.controllibrary.bean
 import android.content.Context
 import android.content.Intent
 import android.text.TextUtils
+import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.startService
 import org.json.JSONException
 import org.json.JSONObject
@@ -17,22 +18,16 @@ data class AppControl(val code: Int,
                       val wob: Int = 0, //白名单还是黑名单
                       val apps: String = "",
                       val start: Int = 0,
-                      val end: Int = 0)
+                      val end: Int = 24)
 
 data class ScreenControl(val code: Int,
                          val status: Int,
                          val start: Int = 0,
-                         val end: Int = 0)
+                         val end: Int = 24)
 
 data class DelControl(val code: Int,
                       val status: Int,
-                      val apps: List<App> = Collections.emptyList<App>())
-
-data class App(val packagename: String, val enable: Int = 0) {
-    override fun toString(): String {
-        return JSONObject().run { put("packagename", packagename);put("enable", enable) }.toString()
-    }
-}
+                      val apps: String = "")
 
 
 object ControlUtils {
@@ -44,26 +39,50 @@ object ControlUtils {
         return Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
     }
 
-    fun updateUser(userid: String) {}
+    fun updateUser(context: Context, userid: String) {
+        context.startService<LockService>(Pair(Constant.ACTION_KEY, Constant.CHANGE_KEY), Pair(Constant.USER_ID_KEY, userid))
+    }
+
     fun updateControl(userid: String, control: String) {
         if (TextUtils.isEmpty(userid)) return
         if (TextUtils.isEmpty(control)) return
-        try {
-            val dataJson = JSONObject(control)
-            val code = dataJson.getInt(Constant.CODE_KEY)
-            when (code) {
-                Constant.CODE_APP -> {
-                    write("${Constant.SD_PATH}$userid${File.separator}${Constant.APP_FILE_NAME}", control)
+        doAsync {
+            try {
+                val dataJson = JSONObject(control)
+                val code = dataJson.getInt(Constant.CODE_KEY)
+                when (code) {
+                    Constant.CODE_APP -> {
+                        write("${Constant.SD_PATH}$userid${File.separator}${Constant.APP_FILE_NAME}", control)
+                    }
+                    Constant.CODE_SCREEN -> {
+                        write("${Constant.SD_PATH}$userid${File.separator}${Constant.SCREEN_FILE_NAME}", control)
+                    }
+                    Constant.CODE_DEL -> {
+                        write("${Constant.SD_PATH}$userid${File.separator}${Constant.DEL_FILE_NAME}", control)
+                    }
                 }
-                Constant.CODE_SCREEN -> {
-                    write("${Constant.SD_PATH}$userid${File.separator}${Constant.SCREEN_FILE_NAME}", control)
-                }
-                Constant.CODE_DEL -> {
-                    write("${Constant.SD_PATH}$userid${File.separator}${Constant.DEL_FILE_NAME}", control)
-                }
+            } catch (e: JSONException) {
             }
-        } catch (e: JSONException) {
+        }
+    }
 
+    /***
+     * 是否在时间内，默认都在时间内
+     */
+    fun intime(start: Int, end: Int): Boolean {
+        val nowTime = ControlUtils.getTime()
+        return if (start in 0..24 && end in 0..24) {
+            when {
+                start > end -> {
+                    nowTime > end || nowTime < start
+                }
+                start < end -> {
+                    nowTime in start..end
+                }
+                else -> true
+            }
+        } else {
+            true
         }
 
     }
@@ -110,13 +129,7 @@ object ControlUtils {
             val code = dataJson.getInt(Constant.CODE_KEY)
             if (code != Constant.CODE_DEL) return defaultControl
             val status = dataJson.getInt(Constant.STATUS_KEY)
-            val apps = arrayListOf<App>()
-            val dataArray = dataJson.getJSONArray(Constant.APPS_KEY)
-            for (i in 0 until dataArray.length()) {
-                val appJson = dataArray.getJSONObject(i)
-                val enable = if (!appJson.isNull(Constant.ENABLE_KEY)) appJson.getInt(Constant.ENABLE_KEY) else 0
-                apps.add(App(appJson.getString(Constant.PACKAGE_NAME_KEY), enable))
-            }
+            val apps = dataJson.getString(Constant.APPS_KEY)
             return DelControl(code, status, apps)
         } catch (e: JSONException) {
             return defaultControl
