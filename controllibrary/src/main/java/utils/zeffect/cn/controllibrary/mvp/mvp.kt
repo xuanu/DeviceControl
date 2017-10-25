@@ -42,7 +42,10 @@ class LockImp(context: Context) : ControlInterface {
     private var mDelImp: DelControlImp? = null
     private var isPause = false
     fun start(userid: String = Constant.DEFAUTL_USER_ID) {
-        if (isStart) return
+        //想了一下，可以重复start，只要id不同
+        if (TextUtils.isEmpty(userid) && isStart) return;
+        if (getUserId() == userid) return
+        stop()
         isPause = false
         mAppImp = AppControlImp(mContext, userid)
         mScreenImp = ScreenControlImp(mContext, userid)

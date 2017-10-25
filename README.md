@@ -4,7 +4,7 @@
 ### 使用说明
 1. 开启服务 `ControlUtils.start(this, USERID)`
 2. 修改策略 `ControlUtils.updateControl(USERID, ""`);//参考各个策略的数据结构
-3. 修改用户 `ControlUtils.updateUser(context,NEWUSERID)`
+3. 修改用户 `ControlUtils.updateUser(context,NEWUSERID)`,也可以重复调用`ControlUtils.start(this, NEW_USERID)`
 
 应该没有了
 
