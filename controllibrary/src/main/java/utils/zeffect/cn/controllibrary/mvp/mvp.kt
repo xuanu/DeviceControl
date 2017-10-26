@@ -43,8 +43,9 @@ class LockImp(context: Context) : ControlInterface {
     private var isPause = false
     fun start(userid: String = Constant.DEFAUTL_USER_ID) {
         //想了一下，可以重复start，只要id不同
-        if (TextUtils.isEmpty(userid) && isStart) return;
-        if (getUserId() == userid) return
+        L.e("LockImp start userid:$userid")
+        if (TextUtils.isEmpty(userid) && isStart) return
+        if (getUserId() == userid && isStart) return
         stop()
         isPause = false
         mAppImp = AppControlImp(mContext, userid)
@@ -53,6 +54,7 @@ class LockImp(context: Context) : ControlInterface {
         isStart = true
         //把id存起来
         saveId(userid)
+        L.e("LockImp start success")
     }
 
 
@@ -61,6 +63,7 @@ class LockImp(context: Context) : ControlInterface {
     }
 
     override fun changeUser(newString: String) {
+        L.e("LockImp changeUser :$newString")
         mAppImp?.changeUser(newString)
         mScreenImp?.changeUser(newString)
         mDelImp?.changeUser(newString)
@@ -69,6 +72,7 @@ class LockImp(context: Context) : ControlInterface {
     }
 
     override fun check() {
+        L.e("LockImp start check")
         if (isPause) return
         mAppImp?.check()
         mScreenImp?.check()
@@ -91,6 +95,7 @@ class LockImp(context: Context) : ControlInterface {
     }
 
     override fun stop() {
+        L.e("LockImp stop")
         mAppImp?.stop()
         mScreenImp?.stop()
         mDelImp?.stop()
@@ -203,6 +208,7 @@ class AppControlImp(context: Context, userid: String) : MyFileObserver.FileListe
     }
 
     override fun change(path: String) {
+        L.e("AppControlImp receiver change path :$path")
         changeControl(path)
     }
 
@@ -247,6 +253,7 @@ class AppControlImp(context: Context, userid: String) : MyFileObserver.FileListe
 
     private fun startWatch(userid: String): String {
         val path = "${Constant.SD_PATH}$userid${File.separator}${Constant.APP_FILE_NAME}"
+        L.e("AppControlImp watch path :$path")
         val tempFile = File(path)
         if (!tempFile.exists()) {
             tempFile.parentFile.mkdirs()
@@ -296,6 +303,7 @@ class AppControlImp(context: Context, userid: String) : MyFileObserver.FileListe
         }
 
         override fun run() {
+            L.e("AppRunable run")
             if (mControl == null) {
                 stop()
             }
@@ -324,7 +332,7 @@ class AppControlImp(context: Context, userid: String) : MyFileObserver.FileListe
                 }
                 val wob = mControl.wob
                 val topApp = AppUtils.getTopPackageName(mContext)
-                L.e("top app :$topApp")
+                L.e("AppRun top app :$topApp")
                 if (TextUtils.isEmpty(topApp)) {
                     continue
                 }
@@ -343,6 +351,7 @@ class AppControlImp(context: Context, userid: String) : MyFileObserver.FileListe
                     }
                 }
             }
+            L.e("AppRunable finish")
         }
 
 
@@ -372,6 +381,7 @@ class ScreenControlImp(context: Context, userid: String) : MyFileObserver.FileLi
     override fun resume() {}
 
     override fun change(path: String) {
+        L.e("ScreenControlImp change path:$path")
         mScreenContrl = ControlUtils.json2Screen(ControlUtils.readFile(path))
         //这个回调不是主线程
         mHandler.sendEmptyMessage(0x98)
@@ -402,6 +412,7 @@ class ScreenControlImp(context: Context, userid: String) : MyFileObserver.FileLi
     }
 
     override fun check() {
+        L.e("ScreenConrolImp check")
         doAsync {
             var isShow = false
             val control = mScreenContrl
@@ -457,7 +468,6 @@ class ScreenControlImp(context: Context, userid: String) : MyFileObserver.FileLi
 
     override fun stop() {
         stopWathch()
-        mContext.sendBroadcast(Intent(Constant.ACTION_REMOVE_VIEW_KEY))
     }
 }
 
@@ -481,6 +491,7 @@ class DelControlImp(context: Context, userid: String) : MyFileObserver.FileListe
     }
 
     override fun change(path: String) {
+        L.e("DelControlImp change path $path")
         inCheck(mUserid, path)
     }
 
@@ -545,6 +556,7 @@ class DelControlImp(context: Context, userid: String) : MyFileObserver.FileListe
 
     private fun startWatch(userid: String): String {
         val path = "${Constant.SD_PATH}$userid${File.separator}${Constant.DEL_FILE_NAME}"
+        L.e("DelControlImp watch path $path")
         val tempFile = File(path)
         if (!tempFile.exists()) {
             tempFile.parentFile.mkdirs()
@@ -585,6 +597,7 @@ class DelControlImp(context: Context, userid: String) : MyFileObserver.FileListe
             this.mControl = control
             mDelApps.clear()
             mDelApps.addAll(anyApps())
+            L.e("DelRun control status ${this.mControl.status},recevier status:${control.status}")
         }
 
         private val mSystemApp by lazy {
@@ -607,6 +620,7 @@ class DelControlImp(context: Context, userid: String) : MyFileObserver.FileListe
         }
 
         override fun run() {
+            L.e("DelRun run")
             if (mControl == null) {
                 stop()
                 return
@@ -617,6 +631,7 @@ class DelControlImp(context: Context, userid: String) : MyFileObserver.FileListe
             }
             val lastUserId = mUserid
             while (isRun) {
+                L.e("DelRun control status ${this.mControl.status}")
                 if (lastUserId != mUserid || mControl == null || mDelApps.isEmpty() || mControl.status != Constant.STATUS_OPEN) {
                     stop()
                     break
@@ -637,7 +652,7 @@ class DelControlImp(context: Context, userid: String) : MyFileObserver.FileListe
                 }
 
                 val topApp = AppUtils.getTopPackageName(mContext)
-                L.e("top app :$topApp")
+                L.e("DelRun top app :$topApp")
                 if (TextUtils.isEmpty(topApp)) {
                     PackageUtils.uninstallNormal(mContext, delPackageName)
                 }
@@ -645,6 +660,7 @@ class DelControlImp(context: Context, userid: String) : MyFileObserver.FileListe
                     PackageUtils.uninstallNormal(mContext, delPackageName)
                 }
             }
+            L.e("DelRun finish")
         }
 
 

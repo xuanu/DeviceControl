@@ -34,6 +34,7 @@ class LockService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val action: String = intent?.getStringExtra(Constant.ACTION_KEY) ?: ""
+        L.e("LockService receiver action:$action")
         when (action) {
             Constant.START_KEY -> {
                 val userid: String = intent?.getStringExtra(Constant.USER_ID_KEY) ?: mLockImp.getUserId()
