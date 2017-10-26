@@ -12,10 +12,7 @@ import android.view.WindowManager
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
 import utils.zeffect.cn.controllibrary.R
-import utils.zeffect.cn.controllibrary.bean.AppControl
-import utils.zeffect.cn.controllibrary.bean.ControlUtils
-import utils.zeffect.cn.controllibrary.bean.DelControl
-import utils.zeffect.cn.controllibrary.bean.ScreenControl
+import utils.zeffect.cn.controllibrary.bean.*
 import utils.zeffect.cn.controllibrary.utils.PackageUtils
 import utils.zeffect.cn.controllibrary.utils.WeakHandler
 import zeffect.cn.common.app.AppUtils
@@ -226,14 +223,14 @@ class AppControlImp(context: Context, userid: String) : MyFileObserver.FileListe
     private fun start(userid: String) {
         stop()
         val path = startWatch(userid)
-        startControl(ControlUtils.json2App(ControlUtils.readFile(path)))
+        startControl(InControlUtils.json2App(InControlUtils.readFile(path)))
     }
 
     /***
      * 触发条件时进行检测
      */
     override fun check() {
-        if (ControlUtils.intime(mControl?.start ?: 0, mControl?.end ?: 0)) {
+        if (InControlUtils.intime(mControl?.start ?: 0, mControl?.end ?: 0)) {
             val path = "${Constant.SD_PATH}$mUserId${File.separator}${Constant.APP_FILE_NAME}"
             changeControl(path)
         }
@@ -277,7 +274,7 @@ class AppControlImp(context: Context, userid: String) : MyFileObserver.FileListe
     }
 
     private fun changeControl(path: String) {
-        val tempContrl = ControlUtils.json2App(ControlUtils.readFile(path))
+        val tempContrl = InControlUtils.json2App(InControlUtils.readFile(path))
         if (mAppRun?.getRun() == true) startControl(tempContrl)
         mAppRun?.setControl(tempContrl)
         if (mAppRun == null || mAppRun?.getRun() == false) {
@@ -326,7 +323,7 @@ class AppControlImp(context: Context, userid: String) : MyFileObserver.FileListe
                     break
                 }
                 val packages = mControl.apps
-                if (TextUtils.isEmpty(packages) || !ControlUtils.intime(mControl.start, mControl.end)) {
+                if (TextUtils.isEmpty(packages) || !InControlUtils.intime(mControl.start, mControl.end)) {
                     stop()
                     break
                 }
@@ -341,12 +338,12 @@ class AppControlImp(context: Context, userid: String) : MyFileObserver.FileListe
                 when (wob) {
                     Constant.WOB_WHITE -> {
                         if (!packages.contains(topApp)) {
-                            ControlUtils.goHome(mContext)//不在白名单
+                            InControlUtils.goHome(mContext)//不在白名单
                         }
                     }
                     else -> {
                         if (packages.contains(topApp)) {
-                            ControlUtils.goHome(mContext)//在黑名单
+                            InControlUtils.goHome(mContext)//在黑名单
                         }
                     }
                 }
@@ -382,7 +379,7 @@ class ScreenControlImp(context: Context, userid: String) : MyFileObserver.FileLi
 
     override fun change(path: String) {
         L.e("ScreenControlImp change path:$path")
-        mScreenContrl = ControlUtils.json2Screen(ControlUtils.readFile(path))
+        mScreenContrl = InControlUtils.json2Screen(InControlUtils.readFile(path))
         //这个回调不是主线程
         mHandler.sendEmptyMessage(0x98)
     }
@@ -407,7 +404,7 @@ class ScreenControlImp(context: Context, userid: String) : MyFileObserver.FileLi
 
     private fun start(userid: String) {
         stop()
-        mScreenContrl = ControlUtils.json2Screen(ControlUtils.readFile(startWatch(userid)))
+        mScreenContrl = InControlUtils.json2Screen(InControlUtils.readFile(startWatch(userid)))
         check()
     }
 
@@ -426,9 +423,9 @@ class ScreenControlImp(context: Context, userid: String) : MyFileObserver.FileLi
             }
             isShow = if ((control.start in 0..24 && control.end in 0..24)) {
                 when {
-                    control.end > control.start -> ControlUtils.getTime() in control.start..control.end
+                    control.end > control.start -> InControlUtils.getTime() in control.start..control.end
                     control.start > control.end -> {
-                        val time = ControlUtils.getTime()
+                        val time = InControlUtils.getTime()
                         time > control.start || time < control.end
                     }
                     else -> false
@@ -519,7 +516,7 @@ class DelControlImp(context: Context, userid: String) : MyFileObserver.FileListe
     private fun inCheck(userid: String, path: String) {
         if (TextUtils.isEmpty(userid)) return
         if (TextUtils.isEmpty(path)) return
-        val contrl = ControlUtils.json2Del(ControlUtils.readFile(path))
+        val contrl = InControlUtils.json2Del(InControlUtils.readFile(path))
         mDelControl = contrl
         mRunDelRun?.setControl(contrl)
         if (contrl.status != Constant.STATUS_OPEN) {
