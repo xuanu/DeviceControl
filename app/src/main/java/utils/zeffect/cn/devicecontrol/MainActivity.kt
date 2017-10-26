@@ -10,7 +10,6 @@ import android.provider.Settings
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.toast
 import utils.zeffect.cn.controllibrary.bean.ControlUtils
-import utils.zeffect.cn.controllibrary.utils.app.UsageStatsUtils
 
 
 class MainActivity : Activity() {
@@ -37,12 +36,7 @@ class MainActivity : Activity() {
     }
 
     private fun startAll() {
-        if (UsageStatsUtils.hasUsageOption(this) && !UsageStatsUtils.isOpen(this)) {
-            UsageStatsUtils.openUsageSetting(this, 100)
-        } else if (!checkSettingAlertPermission(this, 100)) {
-        } else {
-            ControlUtils.start(this, USERID)
-        }
+        ControlUtils.start(this, USERID)
     }
 
     /**

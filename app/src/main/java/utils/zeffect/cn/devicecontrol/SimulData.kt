@@ -1,9 +1,6 @@
 package utils.zeffect.cn.devicecontrol
 
-import org.json.JSONArray
 import org.json.JSONObject
-import utils.zeffect.cn.controllibrary.bean.ScreenControl
-import utils.zeffect.cn.controllibrary.mvp.Constant
 
 /**
  * <pre>
@@ -21,7 +18,7 @@ import utils.zeffect.cn.controllibrary.mvp.Constant
 object SimulData {
     fun App(status: Int = 1, wob: Int = 0): String {
         val dataJson = JSONObject()
-        dataJson.put("code", Constant.CODE_APP)
+        dataJson.put("code", 102)
         dataJson.put("status", status)
         dataJson.put("wob", wob)
         dataJson.put("apps", "com.qimon.message,qimon.com.cn.qimoncheck")
@@ -32,7 +29,7 @@ object SimulData {
 
     fun ScreenControl(status: Int = 1): String {
         val dataJson = JSONObject()
-        dataJson.put("code", Constant.CODE_SCREEN)
+        dataJson.put("code", 103)
         dataJson.put("status", status)
         dataJson.put("start", 0)
         dataJson.put("end", 24)
@@ -41,7 +38,7 @@ object SimulData {
 
     fun DekControl(status: Int = 1): String {
         val dataJson = JSONObject()
-        dataJson.put("code", Constant.CODE_DEL)
+        dataJson.put("code", 104)
         dataJson.put("status", status)
         dataJson.put("apps", "com.qimon.message,qimon.com.cn.qimoncheck")
         return dataJson.toString()

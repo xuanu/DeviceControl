@@ -124,18 +124,17 @@ class LockView(context: Context) {
     private val mView by lazy {
         LayoutInflater.from(context).inflate(R.layout.layout_control_screen, null).apply {
             //TODO 测试期间，点击移除
-            this.setOnClickListener { remove() }
-//            var mStart: Long = 0; this.setOnTouchListener { v, event ->
-//            when (event.action) {
-//                android.view.KeyEvent.ACTION_DOWN -> {
-//                    mStart = System.currentTimeMillis()
-//                }
-//                android.view.KeyEvent.ACTION_UP -> {
-//                    if ((System.currentTimeMillis()) - mStart > 60 * 1000) remove()
-//                }
-//            }
-//            ;true
-//        }
+            var mStart: Long = 0; this.setOnTouchListener { v, event ->
+            when (event.action) {
+                android.view.KeyEvent.ACTION_DOWN -> {
+                    mStart = System.currentTimeMillis()
+                }
+                android.view.KeyEvent.ACTION_UP -> {
+                    if ((System.currentTimeMillis()) - mStart > 60 * 1000) remove()
+                }
+            }
+            ;true
+        }
         }
     }
 
