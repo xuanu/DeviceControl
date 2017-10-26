@@ -3,7 +3,6 @@ package utils.zeffect.cn.controllibrary.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import org.jetbrains.anko.startService
 import utils.zeffect.cn.controllibrary.LockService
 
 /**
@@ -11,6 +10,6 @@ import utils.zeffect.cn.controllibrary.LockService
  */
 class LockReceiver : BroadcastReceiver() {
     override fun onReceive(p0: Context?, p1: Intent?) {
-        p0?.startService<LockService>()
+        p0?.startService(Intent(p0, LockService::class.java))
     }
 }

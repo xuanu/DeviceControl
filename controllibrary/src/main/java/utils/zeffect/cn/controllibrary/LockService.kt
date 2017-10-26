@@ -8,7 +8,6 @@ import android.content.IntentFilter
 import android.location.LocationManager
 import android.os.IBinder
 import android.text.TextUtils
-import org.jetbrains.anko.startService
 import utils.zeffect.cn.controllibrary.mvp.Constant
 import utils.zeffect.cn.controllibrary.mvp.LockImp
 import zeffect.cn.common.log.L
@@ -29,7 +28,7 @@ class LockService : Service() {
         super.onDestroy()
         unregisterReceiver(receiver)
         mLockImp.stop()
-        startService<LockService>()
+        startService(Intent(this, LockService::class.java))
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

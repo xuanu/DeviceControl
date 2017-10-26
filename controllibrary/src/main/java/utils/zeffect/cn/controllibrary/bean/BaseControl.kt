@@ -2,9 +2,8 @@ package utils.zeffect.cn.controllibrary.bean
 
 import android.content.Context
 import android.content.Intent
+import android.os.AsyncTask
 import android.text.TextUtils
-import org.jetbrains.anko.doAsync
-import org.jetbrains.anko.startService
 import org.json.JSONException
 import org.json.JSONObject
 import utils.zeffect.cn.controllibrary.LockService
@@ -30,10 +29,11 @@ data class DelControl(val code: Int,
                       val apps: String = "")
 
 
-object InControlUtils{
+object InControlUtils {
     fun getTime(): Int {
         return Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
     }
+
     /***
      * 是否在时间内，默认都在时间内
      */
@@ -166,36 +166,38 @@ object InControlUtils{
 
 object ControlUtils {
     fun start(context: Context, userid: String = "") {
-        context.startService<LockService>(Pair(Constant.ACTION_KEY, Constant.START_KEY), Pair(Constant.USER_ID_KEY, userid))
+        context.startService(Intent(context, LockService::class.java).putExtra(Constant.ACTION_KEY, Constant.START_KEY).putExtra(Constant.USER_ID_KEY, userid))
     }
 
 
-
     fun updateUser(context: Context, userid: String) {
-        context.startService<LockService>(Pair(Constant.ACTION_KEY, Constant.CHANGE_KEY), Pair(Constant.USER_ID_KEY, userid))
+        context.startService(Intent(context, LockService::class.java).putExtra(Constant.ACTION_KEY, Constant.CHANGE_KEY).putExtra(Constant.USER_ID_KEY, userid))
     }
 
     fun updateControl(userid: String, control: String) {
         if (TextUtils.isEmpty(userid)) return
         if (TextUtils.isEmpty(control)) return
-        doAsync {
-            try {
-                val dataJson = JSONObject(control)
-                val code = dataJson.getInt(Constant.CODE_KEY)
-                when (code) {
-                    Constant.CODE_APP -> {
-                        InControlUtils.write("${Constant.SD_PATH}$userid${File.separator}${Constant.APP_FILE_NAME}", control)
+        object : AsyncTask<String, Void, Void>() {
+            override fun doInBackground(vararg pStrings: String): Void? {
+                try {
+                    val dataJson = JSONObject(pStrings[0])
+                    val code = dataJson.getInt(Constant.CODE_KEY)
+                    when (code) {
+                        Constant.CODE_APP -> {
+                            InControlUtils.write("${Constant.SD_PATH}$userid${File.separator}${Constant.APP_FILE_NAME}", control)
+                        }
+                        Constant.CODE_SCREEN -> {
+                            InControlUtils.write("${Constant.SD_PATH}$userid${File.separator}${Constant.SCREEN_FILE_NAME}", control)
+                        }
+                        Constant.CODE_DEL -> {
+                            InControlUtils.write("${Constant.SD_PATH}$userid${File.separator}${Constant.DEL_FILE_NAME}", control)
+                        }
                     }
-                    Constant.CODE_SCREEN -> {
-                        InControlUtils.write("${Constant.SD_PATH}$userid${File.separator}${Constant.SCREEN_FILE_NAME}", control)
-                    }
-                    Constant.CODE_DEL -> {
-                        InControlUtils.write("${Constant.SD_PATH}$userid${File.separator}${Constant.DEL_FILE_NAME}", control)
-                    }
+                } catch (e: JSONException) {
                 }
-            } catch (e: JSONException) {
+                return null
             }
-        }
+        }.execute(control)
     }
 }
 

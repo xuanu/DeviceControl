@@ -2,17 +2,17 @@ package utils.zeffect.cn.controllibrary.mvp
 
 import android.app.Service
 import android.content.Context
-import android.content.Intent
 import android.os.Environment
 import android.os.FileObserver
 import android.os.Handler
 import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.WindowManager
-import org.jetbrains.anko.doAsync
-import org.jetbrains.anko.uiThread
 import utils.zeffect.cn.controllibrary.R
-import utils.zeffect.cn.controllibrary.bean.*
+import utils.zeffect.cn.controllibrary.bean.AppControl
+import utils.zeffect.cn.controllibrary.bean.DelControl
+import utils.zeffect.cn.controllibrary.bean.InControlUtils
+import utils.zeffect.cn.controllibrary.bean.ScreenControl
 import utils.zeffect.cn.controllibrary.utils.PackageUtils
 import utils.zeffect.cn.controllibrary.utils.WeakHandler
 import zeffect.cn.common.app.AppUtils
@@ -409,17 +409,11 @@ class ScreenControlImp(context: Context, userid: String) : MyFileObserver.FileLi
 
     override fun check() {
         L.e("ScreenConrolImp check")
-        doAsync {
-            var isShow = false
-            val control = mScreenContrl
-            if (control == null) {
-                isShow = false
-                return@doAsync
-            }
-            if (control.status != Constant.STATUS_OPEN) {
-                isShow = false
-                return@doAsync
-            }
+        var isShow = false
+        val control = mScreenContrl
+        if (control == null || control.status != Constant.STATUS_OPEN) {
+            isShow = false
+        } else {
             isShow = if ((control.start in 0..24 && control.end in 0..24)) {
                 when {
                     control.end > control.start -> InControlUtils.getTime() in control.start..control.end
@@ -432,11 +426,9 @@ class ScreenControlImp(context: Context, userid: String) : MyFileObserver.FileLi
             } else {
                 false
             }
-            uiThread {
-                if (isShow) mLockView.show()// mContext.sendBroadcast(Intent(Constant.ACTION_SHOW_VIEW_KEY))
-                else mLockView.remove()// mContext.sendBroadcast(Intent(Constant.ACTION_REMOVE_VIEW_KEY))
-            }
         }
+        if (isShow) mLockView.show()
+        else mLockView.remove()
     }
 
     override fun changeUser(newUserid: String) {

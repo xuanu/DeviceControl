@@ -7,8 +7,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_main.*
-import org.jetbrains.anko.toast
 import utils.zeffect.cn.controllibrary.bean.ControlUtils
 
 
@@ -27,7 +27,7 @@ class MainActivity : Activity() {
         closeScreen.setOnClickListener { ControlUtils.updateControl(USERID, SimulData.ScreenControl(0)) }
         startDel.setOnClickListener { ControlUtils.updateControl(USERID, SimulData.DekControl(1)) }
         closeDel.setOnClickListener { ControlUtils.updateControl(USERID, SimulData.DekControl(0)) }
-        touchTest.setOnClickListener { toast("点击测试，屏幕有无响应！") }
+        touchTest.setOnClickListener { Toast.makeText(this,"点击测试，屏幕有无响应！",Toast.LENGTH_SHORT).show() }
 
     }
 
