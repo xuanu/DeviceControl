@@ -57,7 +57,7 @@ class MainActivity : Activity() {
 
         uninstallBdc.setOnClickListener {
             Toast.makeText(this, "有无权限:" + ControlUtils.checkAccessibilityEnabled(this), Toast.LENGTH_SHORT).show()
-//            sendBroadcast(Intent(AppAccessService.ACTION_ACTIVE_AUTO_INSTALL_APK).putExtra(AppAccessService.ACTIVE_TIME, System.currentTimeMillis()))
+            sendBroadcast(Intent(AppAccessService.ACTION_ACTIVE_AUTO_INSTALL_APK).putExtra(AppAccessService.ACTIVE_TIME, System.currentTimeMillis()))
 //            PackageUtils.uninstallNormal(this, "com.ozing.bdc.activity")
         }
 
