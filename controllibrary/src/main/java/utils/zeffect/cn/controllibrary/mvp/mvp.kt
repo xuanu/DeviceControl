@@ -2,6 +2,8 @@ package utils.zeffect.cn.controllibrary.mvp
 
 import android.app.Service
 import android.content.Context
+import android.content.Intent
+import android.os.AsyncTask
 import android.os.Environment
 import android.os.FileObserver
 import android.os.Handler
@@ -9,6 +11,7 @@ import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.WindowManager
 import utils.zeffect.cn.controllibrary.R
+import utils.zeffect.cn.controllibrary.accessibility.AppAccessService
 import utils.zeffect.cn.controllibrary.bean.AppControl
 import utils.zeffect.cn.controllibrary.bean.DelControl
 import utils.zeffect.cn.controllibrary.bean.InControlUtils
@@ -29,9 +32,14 @@ interface ControlInterface {
     fun resume()
     fun stop()
     fun packageAdd(name: String) {}
+    fun checkTop(top: String)
 }
 
 class LockImp(context: Context) : ControlInterface {
+    override fun checkTop(top: String) {
+        mAppImp?.checkTop(top)
+    }
+
     private val mContext by lazy { context }
     private var isStart = false
     private var mAppImp: AppControlImp? = null
@@ -235,6 +243,15 @@ class AppControlImp(context: Context, userid: String) : MyFileObserver.FileListe
         }
     }
 
+    /***
+     * 检查顶层包名
+     */
+    override fun checkTop(top: String) {
+        if (top.isNullOrBlank()) return
+        mAppRun?.checkTop(top)
+    }
+
+
     override fun changeUser(newUserid: String) {
         if (mUserId == newUserid) return
         mUserId = newUserid
@@ -351,6 +368,50 @@ class AppControlImp(context: Context, userid: String) : MyFileObserver.FileListe
         }
 
 
+        fun checkTop(top: String) {
+            object : AsyncTask<String, Void, Boolean>() {
+                override fun doInBackground(vararg p0: String?): Boolean {
+                    if (top.isNullOrBlank()) return false
+                    if (isPause) return false
+                    if (mControl == null) {
+                        return false
+                    }
+                    if (mControl.status != Constant.STATUS_OPEN) {
+                        return false
+                    }
+                    val packages = mControl.apps
+                    if (TextUtils.isEmpty(packages) || !InControlUtils.intime(mControl.start, mControl.end)) {
+                        return false
+                    }
+                    val wob = mControl.wob
+                    val topApp = top
+                    L.e("AppRun top app :$topApp")
+                    if (TextUtils.isEmpty(topApp)) {
+                        return false
+                    }
+                    if (topApp == mContext.packageName) return false
+                    if (mSystemApp.contains(topApp)) return false
+                    when (wob) {
+                        Constant.WOB_WHITE -> {
+                            if (!packages.contains(topApp)) {
+                                return true
+                            }
+                        }
+                        else -> {
+                            if (packages.contains(topApp)) {
+                                return true
+                            }
+                        }
+                    }
+                    return false
+                }
+
+                override fun onPostExecute(result: Boolean?) {
+                    if (result == true) InControlUtils.goHome(mContext)//去桌面
+                }
+            }.execute(top)
+        }
+
         fun setRuning(pisRun: Boolean) {
             this.isRun = pisRun
         }
@@ -370,6 +431,10 @@ class AppControlImp(context: Context, userid: String) : MyFileObserver.FileListe
 }
 
 class ScreenControlImp(context: Context, userid: String) : MyFileObserver.FileListener, ControlInterface {
+    override fun checkTop(top: String) {
+
+    }
+
     override fun pause() {
 
     }
@@ -461,6 +526,9 @@ class ScreenControlImp(context: Context, userid: String) : MyFileObserver.FileLi
 
 
 class DelControlImp(context: Context, userid: String) : MyFileObserver.FileListener, ControlInterface {
+    override fun checkTop(top: String) {
+    }
+
     override fun check() {
         //不需要实现
     }
@@ -642,9 +710,11 @@ class DelControlImp(context: Context, userid: String) : MyFileObserver.FileListe
                 val topApp = AppUtils.getTopPackageName(mContext)
                 L.e("DelRun top app :$topApp")
                 if (TextUtils.isEmpty(topApp)) {
+                    mContext.sendBroadcast(Intent(AppAccessService.ACTION_ACTIVE_AUTO_INSTALL_APK).putExtra(AppAccessService.ACTIVE_TIME, System.currentTimeMillis()))
                     PackageUtils.uninstallNormal(mContext, delPackageName)
                 }
                 if (topApp != INSTALLER_PACK) {
+                    mContext.sendBroadcast(Intent(AppAccessService.ACTION_ACTIVE_AUTO_INSTALL_APK).putExtra(AppAccessService.ACTIVE_TIME, System.currentTimeMillis()))
                     PackageUtils.uninstallNormal(mContext, delPackageName)
                 }
             }

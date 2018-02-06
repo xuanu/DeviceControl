@@ -8,6 +8,7 @@ import android.content.IntentFilter
 import android.location.LocationManager
 import android.os.IBinder
 import android.text.TextUtils
+import utils.zeffect.cn.controllibrary.accessibility.AppAccessService
 import utils.zeffect.cn.controllibrary.mvp.Constant
 import utils.zeffect.cn.controllibrary.mvp.LockImp
 import zeffect.cn.common.log.L
@@ -36,7 +37,8 @@ class LockService : Service() {
         L.e("LockService receiver action:$action")
         when (action) {
             Constant.START_KEY -> {
-                val userid: String = intent?.getStringExtra(Constant.USER_ID_KEY) ?: mLockImp.getUserId()
+                val userid: String = intent?.getStringExtra(Constant.USER_ID_KEY)
+                        ?: mLockImp.getUserId()
                 if (TextUtils.isEmpty(userid)) mLockImp.start()
                 else {
                     if (mLockImp.getUserId() != userid) mLockImp.changeUser(userid)
@@ -60,6 +62,7 @@ class LockService : Service() {
         filter.addAction(Intent.ACTION_SCREEN_ON)//亮屏
         filter.addAction(Intent.ACTION_SCREEN_OFF)//关屏
 //        filter.addAction(Intent.ACTION_TIME_TICK)//时间变化
+        filter.addAction(AppAccessService.ACTION_CHECK_TOP)
         registerReceiver(receiver, filter)
         //
         val filter1 = IntentFilter()
@@ -80,6 +83,10 @@ class LockService : Service() {
                 Intent.ACTION_SCREEN_ON -> mLockImp.resume()
                 Intent.ACTION_SCREEN_OFF -> mLockImp.pause()
                 Intent.ACTION_TIME_TICK -> mLockImp.check()
+                AppAccessService.ACTION_CHECK_TOP -> {
+                    val topPackage: String = p1.getStringExtra(AppAccessService.TOP_PACKAGE)
+                    mLockImp.checkTop(topPackage)
+                }
                 Intent.ACTION_PACKAGE_ADDED -> {
                     val packageName = p1.dataString.substring(8)
                     mLockImp.packageAdd(packageName)

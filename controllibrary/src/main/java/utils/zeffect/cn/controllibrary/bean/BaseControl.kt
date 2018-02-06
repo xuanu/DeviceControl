@@ -10,6 +10,11 @@ import utils.zeffect.cn.controllibrary.LockService
 import utils.zeffect.cn.controllibrary.mvp.Constant
 import java.io.*
 import java.util.*
+import android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS
+import android.accessibilityservice.AccessibilityServiceInfo
+import android.provider.Settings
+import android.view.accessibility.AccessibilityManager
+import utils.zeffect.cn.controllibrary.accessibility.AppAccessService
 
 
 data class AppControl(val code: Int,
@@ -167,6 +172,7 @@ object InControlUtils {
 object ControlUtils {
     fun start(context: Context, userid: String = "") {
         context.startService(Intent(context, LockService::class.java).putExtra(Constant.ACTION_KEY, Constant.START_KEY).putExtra(Constant.USER_ID_KEY, userid))
+        //并且检查权限。
     }
 
 
@@ -198,6 +204,25 @@ object ControlUtils {
                 return null
             }
         }.execute(control)
+    }
+
+    /**
+     * Check当前辅助服务是否启用
+     * @return 是否启用
+     */
+    fun checkAccessibilityEnabled(context: Context): Boolean {
+        val mAccessibilityManager = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
+        val accessibilityServices = mAccessibilityManager.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_GENERIC)
+        return accessibilityServices.any { it.id == "${context.packageName}/${AppAccessService::class.java.name}" }
+    }
+
+    /**
+     * 前往开启辅助服务界面
+     */
+    fun goAccess(context: Context?) {
+        val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        context?.startActivity(intent)
     }
 }
 

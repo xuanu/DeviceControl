@@ -1,6 +1,11 @@
 # DeviceControl
 简单的为应用添加管控功能。
 
+### 更新说明：
+> 20180206更新：增加辅助服务：成长伴侣，用于获取顶层包名，和自动卸载APP。
+> 使用;ControlUtils.goAccess(context)去打开辅助功能
+> 全用：ControlUtils.checkAccessibilityEnabled(context) 检查服务是否开启。
+
 ### 使用说明
 1. 开启服务 `ControlUtils.start(this, USERID)`
 2. 修改策略 `ControlUtils.updateControl(USERID, ""`);//参考各个策略的数据结构

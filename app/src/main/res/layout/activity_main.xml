@@ -1,65 +1,88 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:app="http://schemas.android.com/apk/res-auto"
-              xmlns:tools="http://schemas.android.com/tools"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:orientation="vertical"
-              tools:context="utils.zeffect.cn.devicecontrol.MainActivity">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="utils.zeffect.cn.devicecontrol.MainActivity">
 
     <Button
         android:id="@+id/startAll"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="开启所有,先要开启所有"
-        />
+        android:text="开启所有,先要开启所有" />
 
     <Button
         android:id="@+id/startBlackApp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="开启应用管控，黑名单（设置的应用不能打开），时间0点到24点，应用为：学信和出货检查"/>
+        android:text="开启应用管控，黑名单（设置的应用不能打开），时间0点到24点，应用为：学信和出货检查" />
 
     <Button
         android:id="@+id/startWhiteApp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="开启应用管控，白名单（只能打开设置的应用），时间0点到24点，应用为：学信和出货检查"/>
+        android:text="开启应用管控，白名单（只能打开设置的应用），时间0点到24点，应用为：学信和出货检查" />
 
     <Button
         android:id="@+id/closeApp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="关闭应用锁"/>
+        android:text="关闭应用锁" />
 
     <Button
         android:id="@+id/startScreen"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="开启屏幕锁，时间0-24点"/>
+        android:text="开启屏幕锁，时间0-24点" />
 
     <Button
         android:id="@+id/closeScreen"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="关闭屏幕锁"/>
+        android:text="关闭屏幕锁" />
 
     <Button
         android:id="@+id/startDel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="开启卸载应用,卸载的应用为：学信和出货检查"/>
+        android:text="开启卸载应用,卸载的应用为：学信和出货检查" />
 
     <Button
         android:id="@+id/closeDel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="关闭卸载"/>
+        android:text="关闭卸载" />
 
     <Button
         android:id="@+id/touchTest"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="看看界面有没有被卡住"/>
+        android:text="看看界面有没有被卡住" />
+
+    <Button
+        android:id="@+id/testUninstall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="匹配能够卸载应用的包名" />
+
+    <Button
+        android:id="@+id/testInstall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="匹配能够安装应用的包名" />
+
+    <Button
+        android:id="@+id/installBdc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="点击自动安装应用" />
+
+    <Button
+        android:id="@+id/uninstallBdc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="点击自动卸载应用" />
 
 </LinearLayout>
