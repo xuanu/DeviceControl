@@ -1,15 +1,14 @@
 package zeffect.cn.common.app
 
 import android.app.ActivityManager
-import android.app.usage.UsageStats
+import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
-import java.util.*
-import android.content.pm.ResolveInfo
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
-import android.content.pm.ApplicationInfo
+import android.content.pm.ResolveInfo
 import android.text.TextUtils
 
 
@@ -99,16 +98,24 @@ object AppUtils {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
                 val usm = context!!.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
                 val time = System.currentTimeMillis()
-                val appList = usm.queryUsageStats(UsageStatsManager.INTERVAL_BEST, time - defaultTime * 1000, time)//检查5秒内的应用情况
-                if (appList != null && appList.size > 0) {
-                    val mySortedMap = TreeMap<Long, UsageStats>()
-                    for (usageStats in appList) {
-                        mySortedMap.put(usageStats.lastTimeUsed, usageStats)
-                    }
-                    if (mySortedMap != null && !mySortedMap.isEmpty()) {
-                        retuString = mySortedMap[mySortedMap.lastKey()]?.packageName ?: ""
+                val event = UsageEvents.Event()
+                val usageEvents = usm.queryEvents(time - 5 * 1000, time)
+                while (usageEvents.hasNextEvent()) {
+                    usageEvents.getNextEvent(event)
+                    if (event.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
+                        retuString = event.packageName
                     }
                 }
+//                val appList = usm.queryUsageStats(UsageStatsManager.INTERVAL_BEST, time - defaultTime * 1000, time)//检查5秒内的应用情况
+//                if (appList != null && appList.size > 0) {
+//                    val mySortedMap = TreeMap<Long, UsageStats>()
+//                    for (usageStats in appList) {
+//                        mySortedMap.put(usageStats.lastTimeUsed, usageStats)
+//                    }
+//                    if (mySortedMap != null && !mySortedMap.isEmpty()) {
+//                        retuString = mySortedMap[mySortedMap.lastKey()]?.packageName ?: ""
+//                    }
+//                }
             } else {
                 val activityManager = context!!.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
                 val tasksInfo = activityManager.getRunningTasks(1)
